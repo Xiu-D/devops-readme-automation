@@ -1,0 +1,27 @@
+name: Auto Update README
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.REPO_TOKEN }}
+
+      - name: Update README content
+        run: |
+          DATE=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
+          awk '/<!-- START_ACTIVITY -->/{print;print "- 🚀 Last automated update: '"$DATE"'";skip=1;next} /<!-- END_ACTIVITY -->/{skip=0} !skip' README.md > tmp.md && mv tmp.md README.md
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "docs: auto-update README activity log [skip ci]" || echo "No changes to commit"
+          git push
